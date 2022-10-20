@@ -1,5 +1,7 @@
 const { response } = require('express');
-const Usuario = require('../models/Usuario')
+const Usuario = require('../models/Usuario');
+const bcrypt = require('bcryptjs'); 
+const { generarJWT } = require('../helpers/jwt')
 
 //Funcion crear usuario
 const crearUsuario = async(req, res = response )=>{
@@ -20,9 +22,11 @@ const crearUsuario = async(req, res = response )=>{
     const dbUser = new Usuario( req.body);   
 
     //Hashear la contraseña (encryptar)
-
+    const salt = bcrypt.genSaltSync(); 
+    dbUser.password = bcrypt.hashSync( password, salt ); 
 
     //Generar el JWT token
+    const token = await generarJWT( dbUser.id, name)
 
     // Crear usuario de DB
     await dbUser.save();
@@ -33,7 +37,7 @@ const crearUsuario = async(req, res = response )=>{
         ok: true,
         uid: dbUser.id,
         name: name,
-       
+        token
     });
         
     } catch (error) {
@@ -48,11 +52,21 @@ const crearUsuario = async(req, res = response )=>{
 
 //Funcion login de usuario
 const loginUsuario = (req, res = response)=>{
+    const { email, password } = req.body;
 
-    return res.json({
-        ok: true,
-        msg: 'Login de usuario /'
+
+    try {
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Error al iniciar sesión, hable con el administrador'
+
     });
+
+    }
+
 
 }
 
