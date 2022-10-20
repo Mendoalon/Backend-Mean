@@ -51,18 +51,49 @@ const crearUsuario = async(req, res = response )=>{
 }
 
 //Funcion login de usuario
-const loginUsuario = (req, res = response)=>{
+const loginUsuario = async(req, res = response)=>{
     const { email, password } = req.body;
 
 
     try {
+
+        const dbUser = await Usuario.findOne({ email: email});
+
+        //Confirma si el correo existe
+        if( !dbUser ){
+            return res.status(400).json({
+                ok: false,
+                msg: 'El correo no existe'
+            }) 
+        }
+
+        //Confirma si el password hace match si es igual.
+        const validPassword = bcrypt.compareSync( password, dbUser.password );
+
+        if ( !validPassword ) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'El password no es valido'
+            }); 
+        }
         
+        //Genera el JWT ya que hasta este punto el usuario y correo.
+        //Generar el JWT token
+        const token = await generarJWT( dbUser.id, dbUser.name);
+        
+        //Respuesta del  servicio
+        return res.json({
+            ok: true,
+            uid: dbUser.id,
+            name: dbUser.name,
+            token
+        })
+
     } catch (error) {
         console.log(error);
         return res.status(500).json({
             ok: false,
             msg: 'Error al iniciar sesión, hable con el administrador'
-
     });
 
     }
@@ -71,11 +102,20 @@ const loginUsuario = (req, res = response)=>{
 }
 
 //Funcion para validar token.
-const revalidarToken =  (req, res = response)=>{
+const revalidarToken =  async(req, res = response)=>{
+
+    const { uid, name } = req;
+
+    //Generar el JWT token
+   
+
+    const token = await generarJWT( uid, name );
 
     return res.json({
         ok: true,
-        msg: 'Renew'
+        uid,
+        name,
+        token
     });
 
 }
